@@ -37,14 +37,26 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ../../frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3000:80"
     environment:
-      - REACT_APP_API_URL=http://user_service:8081 # 指向 user-service
+      - REACT_APP_API_URL=http://api-gateway:8080/api
     depends_on:
       - user_service
+
+  api_gateway:
+    build:
+      context: ../api_gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - user_service
+      # - account_service # 如有
+      # - backtest_service # 如有
+      # - subscribe_service # 如有
 
 volumes:
   postgres_data:
