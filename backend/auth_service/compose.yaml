@@ -1,0 +1,62 @@
+services:
+  flyway:
+    image: flyway/flyway:latest
+    command: -url=jdbc:postgresql://postgres:5432/auth_service_db -user=myuser -password=secret migrate
+    volumes:
+      - ./backend/auth_service/src/main/resources/db/migration:/flyway/sql
+    depends_on:
+      - postgres
+  postgres:
+    image: 'postgres:latest'
+    environment:
+      - 'POSTGRES_DB=auth_service_db'
+      - 'POSTGRES_PASSWORD=secret'
+      - 'POSTGRES_USER=myuser'
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myuser -d auth_service_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - DB_URL=jdbc:postgresql://postgres:5432/auth_service_db
+      - DB_USERNAME=myuser
+      - DB_PASSWORD=secret
+    depends_on:
+      - postgres
+
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=http://api-gateway:8080/api
+    depends_on:
+      - auth-service
+
+  api_gateway:
+    build:
+      context: ../api_gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - auth-service
+      # - account_service # 如有
+      # - backtest_service # 如有
+      # - subscribe_service # 如有
+
+volumes:
+  postgres_data:
