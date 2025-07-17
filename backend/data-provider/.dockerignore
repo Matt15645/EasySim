@@ -1,0 +1,9 @@
+# stock-management/data-provider/.dockerignore
+venv/
+__pycache__/
+*.pyc
+*.log
+.env
+.git/
+.gitignore
+.vscode/

@@ -1,10 +1,38 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
+# ========== 通用系統與編輯器設定檔 ==========
+.DS_Store              # macOS
+*.log                  # 所有 log 檔案
+logs/                 
+
+.env                   # 環境變數
+*.env                 
+.env.local
+.env.*.local           # dev/test/prod 的變體
+
+.vscode/              # VS Code 設定
+.idea/                # IntelliJ 設定
+*.iws
+*.iml
+*.ipr
+
+# ========== 作業系統暫存檔 ==========
+*.class
+*.pyc
+__pycache__/
+.venv/                 # Python 虛擬環境
+venv/
+
+# ========== Java & Maven ==========
+target/                # Maven 或 Gradle build 輸出
+build/                 # Gradle 輸出（全域）
+!**/src/main/**/build/ # 保留 src 裡面的 build（若必要）
+!**/src/test/**/build/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
+.mvn/wrapper/maven-wrapper.jar
+HELP.md                # Maven wrapper 文件，非必要可排除
+
+# ========== Spring Tool Suite (STS) ==========
 .apt_generated
 .classpath
 .factorypath
@@ -13,43 +41,50 @@ target/
 .springBeans
 .sts4-cache
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
+# ========== NetBeans ==========
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+nbproject/private/
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
-.vscode/
-
-# dependencies
-/node_modules
-/.pnp
+# ========== Node.js ==========
+node_modules/
+.pnp
 .pnp.js
 
-# testing
-/coverage
-
-# production
-/build
-
-# misc
-.DS_Store
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
+# ========== 測試輸出 ==========
+coverage/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Python
+*.ipynb_checkpoints
+Pipfile.lock
+poetry.lock
+
+# Docker
+docker-compose.override.yml
+*.pid
+
+# 前端
+.next/
+.nuxt/
+dist/
+build/
+
+# 測試
+.pytest_cache/
+junit-report.xml
+
+# 其他
+Thumbs.db
+ehthumbs.db
+Icon?
+*.code-workspace
+
+# 資料庫
+*.sqlite3
+*.db
+*.bak
