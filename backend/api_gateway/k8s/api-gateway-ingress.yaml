@@ -10,10 +10,10 @@ spec:
     - host: your-domain.com
       http:
         paths:
-          - path: /user-service
+          - path: /api-gateway
             pathType: Prefix
             backend:
               service:
-                name: user-service
+                name: api-gateway
                 port:
                   number: 8081

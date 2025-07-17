@@ -7,5 +7,7 @@ ARG JAR_FILE=target/api_gateway-0.0.1-SNAPSHOT.jar
 # 複製 JAR 檔案到容器中
 COPY ${JAR_FILE} app.jar
 
+COPY src/main/resources/application.yml ./application.yml
+
 # 定義容器啟動時的執行命令
-ENTRYPOINT ["java", "-jar", "/app.jar"]
+ENTRYPOINT ["java", "-jar", "/app.jar", "--spring.config.location=classpath:/,file:./application.yml", "--debug"]
