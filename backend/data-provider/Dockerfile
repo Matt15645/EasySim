@@ -1,12 +1,13 @@
 # stock-management/data-provider/Dockerfile
-# 使用官方 Python 輕量級映像作為基礎，確保穩定性和安全性
-FROM python:3.10-slim-buster
+FROM python:3.10-slim-bullseye
 
 # 設定容器內的工作目錄
 WORKDIR /app
 
 # 防止 pip 緩存，減少最終映像大小
 ENV PIP_NO_CACHE_DIR=off
+
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # 將 requirements.txt 複製到容器中，並優先安裝依賴
 # 這樣做可以利用 Docker 層緩存，如果 requirements.txt 沒有改變，就不會重新安裝依賴

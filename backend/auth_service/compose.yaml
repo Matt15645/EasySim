@@ -21,13 +21,61 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  
+  data-provider:
+    build:
+      context: ../data-provider
+      dockerfile: Dockerfile
+    # ports:
+    #   - "8000:8000"
+    expose:
+      - "8000"
+    env_file:
+      - ../data-provider/.env
+    environment:
+      # 其他環境變數...
+      # CA_CERT_PATH 這裡的值要指向容器內部掛載後的路徑
+      - CA_CERT_PATH=/app/certs/Sinopac.pfx
+      # CA_PASSWORD 仍然可以從 .env 讀取，因為它是字串
+      # - CA_PASSWORD=${CA_PASSWORD} # 如果 .env 已經有了這行，則不需要在這裡重複
+    volumes:
+      # 這裡將本地 Windows 路徑的檔案掛載到容器內部的指定路徑
+      # 左邊是主機路徑，右邊是容器內路徑
+      - "C:/Users/matt9/Downloads/Sinopac.pfx:/app/certs/Sinopac.pfx"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  
+  account-service:
+    build:
+      context: ../account_service
+      dockerfile: Dockerfile
+    # ports:
+    #   - "8082:8082"
+    expose:
+      - "8082"
+    environment:
+      - DATA_PROVIDER_URL=http://data-provider:8000
+      - DATA_PROVIDER_TIMEOUT=5000
+    depends_on:
+      data-provider:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   auth-service:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "8081:8081"
+    # ports:
+    #   - "8081:8081"
+    expose:
+      - "8081"
     environment:
       - DB_URL=jdbc:postgresql://postgres:5432/auth_service_db
       - DB_USERNAME=myuser
@@ -45,8 +93,9 @@ services:
       - REACT_APP_API_URL=http://api-gateway:8080/api
     depends_on:
       - auth-service
+      - api-gateway
 
-  api_gateway:
+  api-gateway:
     build:
       context: ../api_gateway
       dockerfile: Dockerfile
@@ -54,7 +103,7 @@ services:
       - "8080:8080"
     depends_on:
       - auth-service
-      # - account_service # 如有
+      - account-service # 如有
       # - backtest_service # 如有
       # - subscribe_service # 如有
 
