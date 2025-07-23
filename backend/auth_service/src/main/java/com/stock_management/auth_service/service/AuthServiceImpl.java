@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
+import com.stock_management.auth_service.util.JwtUtil;
 
 @Service  // 標記為服務類
 @RequiredArgsConstructor  // 生成帶有必需參數的構造函數，實現依賴注入
@@ -44,7 +45,7 @@ public class AuthServiceImpl implements AuthService {
         User savedUser = userRepository.save(user);
         
         // 創建簡單的模擬令牌 (在實際生產環境中應使用 JWT)
-        String token = UUID.randomUUID().toString();
+        String token = JwtUtil.generateToken(savedUser.getId(), savedUser.getUsername());
         
         // 返回認證響應
         return AuthResponse.builder()
@@ -66,7 +67,7 @@ public class AuthServiceImpl implements AuthService {
         }
         
         // 創建簡單的模擬令牌 (在實際生產環境中應使用 JWT)
-        String token = UUID.randomUUID().toString();
+        String token = JwtUtil.generateToken(user.getId(), user.getUsername());
         
         // 返回認證響應
         return AuthResponse.builder()
