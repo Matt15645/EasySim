@@ -82,6 +82,24 @@ services:
       - DB_PASSWORD=secret
     depends_on:
       - postgres
+  
+  backtest-service:
+    build:
+      context: ../backtest_service
+      dockerfile: Dockerfile
+    expose:
+      - "8084"
+    environment:
+      - DATA_PROVIDER_URL=http://data-provider:8000
+      - DATA_PROVIDER_TIMEOUT=10000
+    depends_on:
+      data-provider:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   frontend:
     build:
@@ -104,7 +122,7 @@ services:
     depends_on:
       - auth-service
       - account-service # 如有
-      # - backtest_service # 如有
+      - backtest-service # 如有
       # - subscribe_service # 如有
 
 volumes:

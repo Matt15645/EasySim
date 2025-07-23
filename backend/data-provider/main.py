@@ -55,6 +55,10 @@ class Position(BaseModel):
 class PositionResponse(BaseModel):
     positions: List[Position]  # 原始持股資料列表
     timestamp: datetime  # 資料取得時間
+
+class TickRequest(BaseModel):
+    symbols: List[str]
+    dates: List[str]  # ["2025-07-20", "2025-07-21", ...]
     
 # 只回傳原始資料，不做任何計算
 @app.get("/api/positions", response_model=PositionResponse)
@@ -82,6 +86,31 @@ async def get_positions():
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"取得持股資料失敗: {str(e)}")
+
+@app.post("/api/ticks")
+def get_ticks(req: TickRequest):
+    result = {}
+    for symbol in req.symbols:
+        result[symbol] = []
+        for date in req.dates:
+            try:
+                ticks = api.ticks(
+                    contract=api.Contracts.Stocks[symbol],
+                    date=date,
+                    query_type=sj.constant.TicksQueryType.LastCount,
+                    last_cnt=1,
+                )
+                if ticks and hasattr(ticks, 'close') and ticks.close:
+                    result[symbol].append({
+                        "date": date,
+                        "close": ticks.close[0] if isinstance(ticks.close, list) else ticks.close,
+                        "ts": ticks.ts[0] if isinstance(ticks.ts, list) else ticks.ts
+                    })
+            except Exception as e:
+                print(f"取得 {symbol} 在 {date} 的資料時發生錯誤: {e}")
+                # 繼續處理下一個日期，不中斷整個流程
+                continue
+    return result
 
 # 新增健康檢查端點
 @app.get("/health")
