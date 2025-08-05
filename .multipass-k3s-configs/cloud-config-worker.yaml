@@ -1,0 +1,29 @@
+#cloud-config
+# 這是 cloud-init 配置檔，用於自動化 VM 啟動時的設定
+
+# 1. SSH 設定：添加你的 SSH 公鑰，方便直接 SSH 登入 VM
+users:
+  - name: ubuntu # Multipass VM 預設的使用者名稱
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCk4X1e/7NnYQ+TZzB7FbX8SbJmJ4N8qungBquy812Bx17gPc29IPDd3t5+kPqz+WNpbmnYkQS2D8jbCxBh1w8DxiecLnxeQS9Bc80HQVx+Z+RaQQTp6/gtHbkYcHdgtbU5JaAMVZOAax10PJ3fRifymyH7TiTqedvEOfe18SCxQTwEeWy0UsoSnTUk29peJm52N5E6IxYOLTMBMjmqR9QQDJe5B/CIDAzyllRLyoUT1HmOQ7UhNgZZpLCXtnBlPwB8l4H+uPaIBy/AImlmN5fZ5FAaHljdR/66+1Bv2tlJdCTdEoXo81FY62JcqTiXq9QUcXtWMbP/JMaPUSXaaTxiiGQoW7Gm92gTwBhnDjPHaLVcx4klZrPrG+L46oDFxJp3bz9XGxrZr0c//rsa8CUSo0FzBu0FWfn0Gc/MeoVgzStvQjxJWmzJ+YjEugtaRbOgcMKXv0+idNWm++56+G47V0brTFIhjM80l9FtnijUWIcH2V47wDuuAre79UUYECcUqfcm99K3fYyzYGr4dckaExwNvqSEVg804g9h0JyBH5zrHVhBLmHwQXRMOujFDCDmjOzU5ua4DKJ7Kun1CEUTEHE1sNJYJpDIASi4ScQlQN6skIZosCnhtzyzCJDoOs9W75jQ5hvAFUI82aQUUDwATSiFSxnDfMW8/rkAQavG3w== matt910106@gmail.com 
+
+# 2. 執行命令：VM 啟動後要執行的命令
+runcmd:
+  - echo "--- Starting cloud-init setup for K3s Worker ---"
+  # 更新套件清單並安裝一些常用工具
+  - sudo apt update -y
+  - sudo apt install -y curl vim git htop
+
+  # 安裝 K3s Agent (Worker)
+  # K3S_URL 指向 Master 節點的 IP 和 K3s 預設的 6443 埠
+  # K3S_TOKEN 是 Master 節點的 Node Token
+  # INSTALL_K3S_EXEC 設定節點名稱
+  - export K3S_URL="https://10.0.2.15:6443" # <<<< 替換成 K3s Master 節點的實際 IP >>>>
+  - export K3S_TOKEN="K106efdd310ce2382deee7ecdc209529655c1e6f59368fef787ce4b68608cb3a537::server:7758a3e7fc305982e4c627a39c3f83bf" # <<<< 替換成 Master 節點的 Node Token >>>>
+  - echo "Installing K3s Agent on $(hostname)..."
+  - curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--node-name $(hostname)" sh - # 使用 hostname 作為節點名稱
+
+  # 等待 K3s 服務啟動
+  # - sleep 30
+
+  - echo "--- K3s Worker setup complete ---"

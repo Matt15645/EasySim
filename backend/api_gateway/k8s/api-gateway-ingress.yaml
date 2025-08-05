@@ -2,18 +2,55 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: api-gateway-ingress
-  namespace: default
+  namespace: stock-management
+  labels:
+    app: api-gateway
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    # k3d 使用 Traefik 作為預設 Ingress Controller
+    kubernetes.io/ingress.class: "traefik"
+    # 啟用 CORS
+    traefik.ingress.kubernetes.io/router.middlewares: "stock-management-cors@kubernetescrd"
+    # SSL 重定向（可選）
+    traefik.ingress.kubernetes.io/redirect-entry-point: "https"
 spec:
   rules:
-    - host: your-domain.com
-      http:
-        paths:
-          - path: /api-gateway
-            pathType: Prefix
-            backend:
-              service:
-                name: api-gateway
-                port:
-                  number: 8081
+  - host: api.stock-management.local  # 本地開發用域名
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: api-gateway
+            port:
+              number: 8080
+  # 如果需要 TLS
+  # tls:
+  # - hosts:
+  #   - api.stock-management.local
+  #   secretName: api-gateway-tls
+---
+# CORS Middleware for Traefik
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: cors
+  namespace: stock-management
+spec:
+  headers:
+    accessControlAllowMethods:
+      - "GET"
+      - "POST"
+      - "PUT"
+      - "DELETE"
+      - "OPTIONS"
+    accessControlAllowHeaders:
+      - "Content-Type"
+      - "Authorization"
+      - "X-Requested-With"
+    accessControlAllowOriginList:
+      - "http://localhost:3000"
+      - "http://stock-management.local"
+      - "https://stock-management.local"
+    accessControlMaxAge: 100
+    addVaryHeader: true
