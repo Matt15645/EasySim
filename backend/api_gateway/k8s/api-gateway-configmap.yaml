@@ -43,6 +43,10 @@ data:
               uri: http://backtest-service:8084
               predicates:
                 - Path=/api/backtest/**
+            - id: subscribe-service
+              uri: http://subscribe-service:8083
+              predicates:
+                - Path=/api/email/**
           discovery:
             locator:
               enabled: true

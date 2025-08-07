@@ -10,8 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.ResourceAccessException;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,39 +27,31 @@ public class DataProviderService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
-     * 向 Data Provider 請求多支股票的歷史資料
+     * 向 Data Provider 請求多支股票的歷史資料（使用non-blocking kbar API）
      */
     public Map<String, List<Map<String, Object>>> getHistoricalData(List<String> symbols, String startDate, String endDate) {
         try {
-            // 生成日期範圍
-            List<String> dates = generateDateRange(startDate, endDate);
-            
             // 建立請求體
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("symbols", symbols);
-            requestBody.put("dates", dates);
+            requestBody.put("start_date", startDate);
+            requestBody.put("end_date", endDate);
 
-            // 設定 HTTP 標頭
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            
-            // 建立 HTTP 實體
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
-            // 發送 POST 請求到 Data Provider
-            String url = dataProviderUrl + "/api/ticks";
-            log.info("向 Data Provider 請求資料: {}", url);
-            log.debug("請求參數: symbols={}, dates={}", symbols, dates);
+            // 使用新的歷史資料端點
+            String url = dataProviderUrl + "/api/historical";
+            log.info("向 Data Provider 請求歷史資料: {}", url);
+            log.debug("請求參數: symbols={}, start_date={}, end_date={}", symbols, startDate, endDate);
 
             ResponseEntity<String> response = restTemplate.exchange(
-                url, 
-                HttpMethod.POST, 
-                entity, 
-                String.class
+                url, HttpMethod.POST, entity, String.class
             );
 
             if (response.getStatusCode() == HttpStatus.OK) {
-                // 解析 JSON 回應
+                // 解析回應
                 JsonNode jsonNode = objectMapper.readTree(response.getBody());
                 Map<String, List<Map<String, Object>>> result = new HashMap<>();
                 
@@ -88,31 +78,9 @@ public class DataProviderService {
                 throw new RuntimeException("Data Provider 回應錯誤: " + response.getStatusCode());
             }
 
-        } catch (ResourceAccessException e) {
-            log.error("無法連接到 Data Provider: {}", e.getMessage());
-            throw new RuntimeException("無法連接到 Data Provider: " + e.getMessage());
         } catch (Exception e) {
-            log.error("從 Data Provider 取得資料時發生錯誤: {}", e.getMessage());
+            log.error("從 Data Provider 取得資料時發生錯誤: {}", e.getMessage(), e);
             throw new RuntimeException("取得歷史資料失敗: " + e.getMessage());
         }
-    }
-
-    /**
-     * 生成日期範圍
-     */
-    private List<String> generateDateRange(String startDate, String endDate) {
-        List<String> dates = new ArrayList<>();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        
-        LocalDate start = LocalDate.parse(startDate, formatter);
-        LocalDate end = LocalDate.parse(endDate, formatter);
-        
-        LocalDate current = start;
-        while (!current.isAfter(end)) {
-            dates.add(current.format(formatter));
-            current = current.plusDays(1);
-        }
-        
-        return dates;
     }
 }

@@ -26,7 +26,7 @@ public class BacktestService {
             log.info("開始執行回測，股票: {}, 期間: {} 到 {}", 
                      request.getSymbols(), request.getStartDate(), request.getEndDate());
 
-            // 從 Data Provider 取得原始資料
+            // 使用批次歷史資料端點
             Map<String, List<Map<String, Object>>> rawData = dataProviderService.getHistoricalData(
                 request.getSymbols(), 
                 request.getStartDate(), 
