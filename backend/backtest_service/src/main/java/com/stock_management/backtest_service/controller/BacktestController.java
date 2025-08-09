@@ -50,4 +50,14 @@ public class BacktestController {
     public ResponseEntity<String> healthCheck() {
         return ResponseEntity.ok("Backtest Service is running");
     }
+
+    @PostMapping
+    public ResponseEntity<BacktestResponseDto> performBacktest(@RequestBody BacktestRequestDto request) {
+        log.info("收到回測請求: 股票={}, 期間={} 到 {}, 起始資金={}", 
+                 request.getSymbols(), request.getStartDate(), request.getEndDate(), 
+                 request.getInitialCapital());
+
+        BacktestResponseDto response = backtestService.performBacktest(request);
+        return ResponseEntity.ok(response);
+    }
 }

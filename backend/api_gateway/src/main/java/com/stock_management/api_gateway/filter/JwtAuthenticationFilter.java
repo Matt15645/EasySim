@@ -2,6 +2,7 @@ package com.stock_management.api_gateway.filter;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -12,9 +13,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.security.Key;
+
 @Component
 public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
-    private static final String SECRET = "your-256-bit-secret-your-256-bit-secret";
+    private static final Key key = Keys.hmacShaKeyFor("your-256-bit-secret-your-256-bit-secret".getBytes());
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -30,7 +33,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         }
         String token = authHeader.substring(7);
         try {
-            Claims claims = Jwts.parserBuilder().setSigningKey(SECRET.getBytes()).build()
+            Claims claims = Jwts.parserBuilder().setSigningKey(key).build()
                     .parseClaimsJws(token).getBody();
             
             // --- 這是修改的關鍵 ---

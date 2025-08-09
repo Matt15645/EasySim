@@ -1,6 +1,9 @@
 # 使用 OpenJDK 17 作為基礎映像
 FROM openjdk:17-jdk-slim
 
+# 安裝 curl 用於健康檢查
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
 # 設定工作目錄
 WORKDIR /app
 
