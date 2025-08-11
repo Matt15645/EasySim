@@ -48,17 +48,17 @@ public class BacktestService {
             List<PortfolioSnapshot> portfolioHistory = simulateBacktest(
                     request, priceData, sortedDates);
 
-            // 計算回測結果
-            BacktestResult result = portfolioCalculationService.calculateBacktestResult(
-                    portfolioHistory, request.getInitialCapital());
-
+            // 建立回應物件
             BacktestResponseDto response = new BacktestResponseDto();
-            response.setResult(result);
             response.setPortfolioHistory(portfolioHistory);
             response.setTimestamp(LocalDateTime.now());
             response.setMessage("回測執行成功");
 
-            log.info("回測執行完成，總報酬率: {}%", result.getReturnRate());
+            // 計算回測結果並設置到回應物件中
+            portfolioCalculationService.calculateBacktestResult(
+                    response, portfolioHistory, request.getInitialCapital());
+
+            log.info("回測執行完成，總報酬率: {}%", response.getReturnRate());
             return response;
 
         } catch (Exception e) {

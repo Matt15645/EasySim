@@ -16,7 +16,8 @@ public class PortfolioCalculationService {
     /**
      * 計算投資組合回測結果
      */
-    public BacktestResult calculateBacktestResult(
+    public void calculateBacktestResult(
+            BacktestResponseDto response,
             List<PortfolioSnapshot> portfolioHistory,
             BigDecimal initialCapital) {
 
@@ -24,29 +25,26 @@ public class PortfolioCalculationService {
             throw new IllegalArgumentException("投資組合歷史資料為空");
         }
 
-        BacktestResult result = new BacktestResult();
-        result.setInitialCapital(initialCapital);
+        response.setInitialCapital(initialCapital);
 
         // 最終價值
         PortfolioSnapshot finalSnapshot = portfolioHistory.get(portfolioHistory.size() - 1);
-        result.setFinalValue(finalSnapshot.getTotalValue());
+        response.setFinalValue(finalSnapshot.getTotalValue());
 
         // 總報酬和報酬率
         BigDecimal totalReturn = finalSnapshot.getTotalValue().subtract(initialCapital);
-        result.setTotalReturn(totalReturn);
-        result.setReturnRate(totalReturn.divide(initialCapital, 4, RoundingMode.HALF_UP)
+        response.setTotalReturn(totalReturn);
+        response.setReturnRate(totalReturn.divide(initialCapital, 4, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100)));
 
         // 交易天數
-        result.setTradingDays(portfolioHistory.size());
+        response.setTradingDays(portfolioHistory.size());
 
         // 年化 Sharpe Ratio
-        result.setAnnualizedSharpeRatio(calculateAnnualizedSharpeRatio(portfolioHistory));
+        response.setAnnualizedSharpeRatio(calculateAnnualizedSharpeRatio(portfolioHistory));
 
         // 最大回撤
-        result.setMaxDrawdown(calculateMaxDrawdown(portfolioHistory));
-
-        return result;
+        response.setMaxDrawdown(calculateMaxDrawdown(portfolioHistory));
     }
 
     /**
