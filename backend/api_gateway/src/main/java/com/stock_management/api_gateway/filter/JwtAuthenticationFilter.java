@@ -3,6 +3,7 @@ package com.stock_management.api_gateway.filter;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -17,7 +18,12 @@ import java.security.Key;
 
 @Component
 public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
-    private static final Key key = Keys.hmacShaKeyFor("your-256-bit-secret-your-256-bit-secret".getBytes());
+    @Value("${jwt.secret}")
+    private String jwtSecret;
+
+    private Key getSigningKey() {
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
+    }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -33,14 +39,13 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         }
         String token = authHeader.substring(7);
         try {
-            Claims claims = Jwts.parserBuilder().setSigningKey(key).build()
+            Claims claims = Jwts.parserBuilder().setSigningKey(getSigningKey()).build()
                     .parseClaimsJws(token).getBody();
-            
+
             // --- 這是修改的關鍵 ---
             // 建立一個新的 request，並加上 header
             ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                     .header("X-User-Id", claims.getSubject())
-                    .header("X-Username", claims.get("username", String.class))
                     .build();
 
             // 建立一個新的 exchange，並用新的 request 取代舊的

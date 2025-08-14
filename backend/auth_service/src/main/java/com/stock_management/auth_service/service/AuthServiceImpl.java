@@ -6,14 +6,11 @@ import com.stock_management.auth_service.dto.RegisterRequest;
 import com.stock_management.auth_service.exception.AppException;
 import com.stock_management.auth_service.model.User;
 import com.stock_management.auth_service.repository.UserRepository;
-import com.stock_management.auth_service.service.AuthService;
+import com.stock_management.auth_service.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
-import com.stock_management.auth_service.util.JwtUtil;
 
 @Service  // 標記為服務類
 @RequiredArgsConstructor  // 生成帶有必需參數的構造函數，實現依賴注入
@@ -21,6 +18,7 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;  // 用戶存儲庫
     private final PasswordEncoder passwordEncoder;  // 密碼編碼器
+    private final JwtUtil jwtUtil;  // JWT 工具類
     
     @Override
     public AuthResponse register(RegisterRequest request) {
@@ -45,7 +43,7 @@ public class AuthServiceImpl implements AuthService {
         User savedUser = userRepository.save(user);
         
         // 創建簡單的模擬令牌 (在實際生產環境中應使用 JWT)
-        String token = JwtUtil.generateToken(savedUser.getId(), savedUser.getUsername());
+        String token = jwtUtil.generateToken(savedUser.getId());
         
         // 返回認證響應
         return AuthResponse.builder()
@@ -67,7 +65,7 @@ public class AuthServiceImpl implements AuthService {
         }
         
         // 創建簡單的模擬令牌 (在實際生產環境中應使用 JWT)
-        String token = JwtUtil.generateToken(user.getId(), user.getUsername());
+        String token = jwtUtil.generateToken(user.getId());
         
         // 返回認證響應
         return AuthResponse.builder()

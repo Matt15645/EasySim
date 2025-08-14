@@ -122,5 +122,23 @@ services:
       - backtest-service
       # - subscribe_service # 如有
 
+  subscribe-service:
+    build:
+      context: ./backend/subscribe_service
+      dockerfile: Dockerfile
+    expose:
+      - "8083"
+    environment:
+      - DATA_PROVIDER_URL=http://data-provider:8000
+      - DATA_PROVIDER_TIMEOUT=10000
+    depends_on:
+      data-provider:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
 volumes:
   postgres_data:

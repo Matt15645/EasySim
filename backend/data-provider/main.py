@@ -63,7 +63,13 @@ class HistoricalRequest(BaseModel):
     symbols: List[str]
     start_date: str  # "2025-01-01"
     end_date: str    # "2025-07-31"
-    
+
+class ScannerRequest(BaseModel):
+    scanner_type: str           
+    date: str                   
+    count: int = 100           
+    ascending: bool = False  
+
 # 只回傳原始資料，不做任何計算
 @app.get("/api/positions", response_model=PositionResponse)
 async def get_positions():
@@ -192,6 +198,34 @@ async def get_historical_data(req: HistoricalRequest):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"取得歷史資料失敗: {str(e)}")
+
+def get_scanner_type(type_str: str):
+    types = {
+        "ChangePercentRank": sj.constant.ScannerType.ChangePercentRank,
+        "VolumeRank": sj.constant.ScannerType.VolumeRank,
+        "AmountRank": sj.constant.ScannerType.AmountRank,
+        "ChangePriceRank": sj.constant.ScannerType.ChangePriceRank,
+        "DayRangeRank": sj.constant.ScannerType.DayRangeRank,
+    }
+    return types.get(type_str)
+
+@app.post("/api/scanner")  
+def get_scanner_data(request: ScannerRequest):  
+    try:
+        scanner_type = get_scanner_type(request.scanner_type)
+        if not scanner_type:
+            raise HTTPException(status_code=400, detail="不支援的掃描器類型")
+        
+        results = api.scanners(  
+            scanner_type=scanner_type,
+            date=request.date,
+            count=request.count,
+            ascending=request.ascending
+        )
+        
+        return {"data": [item.__dict__ for item in results], "timestamp": datetime.now()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # 新增健康檢查端點
 @app.get("/health")
