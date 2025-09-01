@@ -5,12 +5,30 @@ metadata:
   namespace: stock-management
   labels:
     app: api-gateway
+    tier: gateway
 data:
-  # 額外的 Spring 配置
+  SERVER_PORT: "8080"
+  SPRING_PROFILES_ACTIVE: "k8s"
+  SPRING_APPLICATION_NAME: "api-gateway"
+
+  AUTH_SERVICE_URI: "http://auth-service:8081"
+  ACCOUNT_SERVICE_URI: "http://account-service:8082"
+  SUBSCRIBE_SERVICE_URI: "http://subscribe-service:8083"
+  BACKTEST_SERVICE_URI: "http://backtest-service:8084"
+
+  CORS_ALLOWED_ORIGINS: "*"
+  CORS_ALLOWED_METHODS: "GET,POST,PUT,DELETE,OPTIONS"
+  CORS_ALLOWED_HEADERS: "*"
+
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,prometheus"
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: "always"
+  MANAGEMENT_HEALTH_PROBES_ENABLED: "true"
+
+  JAVA_OPTS: "-Xmx512m -Xms256m -XX:+UseContainerSupport"
+
   application-k8s.yml: |
     server:
       port: 8080
-    
     spring:
       application:
         name: api-gateway
@@ -19,9 +37,7 @@ data:
           globalcors:
             corsConfigurations:
               '[/**]':
-                allowedOrigins: 
-                  - "http://frontend"        # 來自同一集群的前端服務
-                  - "http://localhost:3000"  # 開發環境
+                allowedOrigins: "*"
                 allowedMethods:
                   - GET
                   - POST
@@ -29,7 +45,6 @@ data:
                   - DELETE
                   - OPTIONS
                 allowedHeaders: "*"
-                allowCredentials: true
           routes:
             - id: auth-service
               uri: http://auth-service:8081
@@ -46,12 +61,10 @@ data:
             - id: subscribe-service
               uri: http://subscribe-service:8083
               predicates:
-                - Path=/api/email/**
-          discovery:
-            locator:
-              enabled: true
-              lower-case-service-id: true
-    
+                - Path=/api/scanner/**
+          locator:
+            enabled: true
+            lower-case-service-id: true
     management:
       endpoints:
         web:
@@ -62,7 +75,6 @@ data:
           probes:
             enabled: true
           show-details: always
-    
     logging:
       level:
         org.springframework.cloud.gateway: DEBUG

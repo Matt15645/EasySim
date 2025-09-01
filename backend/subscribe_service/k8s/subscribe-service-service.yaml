@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: subscribe-service  # 其他服務通過此名稱訪問
+  namespace: stock-management
+  labels:
+    app: subscribe-service
+    version: v1
+spec:
+  type: ClusterIP  # 僅集群內部訪問，不暴露到外部
+  selector:
+    app: subscribe-service  # 選擇對應的 Pod
+  ports:
+  - name: http
+    port: 8083        # 集群內其他服務訪問的端口
+    targetPort: 8083  # Pod 內容器的端口
+    protocol: TCP
+  sessionAffinity: None  # 或 ClientIP，根據需求調整
+  publishNotReadyAddresses: false  # 只有就緒的 Pod 才會接收流量

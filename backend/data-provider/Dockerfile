@@ -17,6 +17,9 @@ RUN pip install -r requirements.txt
 # 將應用程式碼複製到容器中
 # .dockerignore 檔案會排除不需要複製的內容（例如 venv/）
 COPY . .
+# COPY Sinopac.pfx /app/Sinopac.pfx
+
+# RUN chown -R 1000:1000 /app
 
 # 定義容器監聽的端口
 EXPOSE 8000

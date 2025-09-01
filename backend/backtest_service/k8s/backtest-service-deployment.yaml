@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backtest-service
+  namespace: stock-management
+  labels:
+    app: backtest-service
+    version: v1
+spec:
+  replicas: 1  # minikube 測試用，生產環境可調整為 2-3
+  selector:
+    matchLabels:
+      app: backtest-service
+  template:
+    metadata:
+      labels:
+        app: backtest-service
+        version: v1
+    spec:
+      serviceAccountName: backtest-service-sa  # 使用自訂 ServiceAccount
+      containers:
+      - name: backtest-service
+        image: backtest-service:latest  # 本地構建的映像
+        imagePullPolicy: IfNotPresent  # minikube 使用本地映像，k3s 改為 Always
+        ports:
+        - containerPort: 8084
+          name: http
+          protocol: TCP
+        env:
+        # 從 ConfigMap 引用非敏感配置
+        - name: SPRING_PROFILES_ACTIVE
+          valueFrom:
+            configMapKeyRef:
+              name: backtest-service-config
+              key: SPRING_PROFILES_ACTIVE
+        - name: DATA_PROVIDER_URL
+          valueFrom:
+            configMapKeyRef:
+              name: backtest-service-config
+              key: DATA_PROVIDER_URL
+        - name: DATA_PROVIDER_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              name: backtest-service-config
+              key: DATA_PROVIDER_TIMEOUT
+        - name: SERVER_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: backtest-service-config
+              key: SERVER_PORT
+        - name: LOGGING_LEVEL_ROOT
+          valueFrom:
+            configMapKeyRef:
+              name: backtest-service-config
+              key: LOGGING_LEVEL_ROOT
+        - name: JAVA_TOOL_OPTIONS   # 改用 JAVA_TOOL_OPTIONS，K8s 常見做法
+          valueFrom:
+            configMapKeyRef:
+              name: backtest-service-config
+              key: JAVA_OPTS
+        # 從 Secret 引用敏感配置
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: backtest-service-secret
+              key: JWT_SECRET
+              optional: true  # 如果 backtest-service 不需要 JWT，設為可選
+        # 健康檢查配置
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8084
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8084
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "100m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 10"]
+      initContainers:
+      - name: wait-for-data-provider
+        image: busybox:1.35
+        command: ['sh', '-c']
+        args:
+        - |
+          echo "Waiting for data-provider service..."
+          until nc -z data-provider-service 8000; do
+            echo "data-provider not ready, waiting..."
+            sleep 5
+          done
+          echo "data-provider is ready!"
+      restartPolicy: Always
+      dnsPolicy: ClusterFirst

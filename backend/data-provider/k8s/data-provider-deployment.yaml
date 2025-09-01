@@ -1,0 +1,117 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-provider
+  namespace: stock-management
+  labels:
+    app: data-provider
+    version: v1
+spec:
+  replicas: 1  # minikube 測試用，生產環境可調整為 2-3
+  selector:
+    matchLabels:
+      app: data-provider
+  template:
+    metadata:
+      labels:
+        app: data-provider
+        version: v1
+    spec:
+      serviceAccountName: data-provider-sa  # 使用自訂 ServiceAccount
+      containers:
+      - name: data-provider
+        image: data-provider:latest  # 本地構建的映像
+        imagePullPolicy: IfNotPresent  # minikube 使用本地映像，k3s 改為 Always
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        env:
+        # 從 ConfigMap 引用非敏感配置
+        - name: PYTHONPATH
+          valueFrom:
+            configMapKeyRef:
+              name: data-provider-config
+              key: PYTHONPATH
+        - name: PYTHONUNBUFFERED
+          valueFrom:
+            configMapKeyRef:
+              name: data-provider-config
+              key: PYTHONUNBUFFERED
+        - name: GUNICORN_WORKERS
+          valueFrom:
+            configMapKeyRef:
+              name: data-provider-config
+              key: GUNICORN_WORKERS
+        - name: GUNICORN_BIND
+          valueFrom:
+            configMapKeyRef:
+              name: data-provider-config
+              key: GUNICORN_BIND
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: data-provider-config
+              key: LOG_LEVEL
+        # 從 Secret 引用敏感配置
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: data-provider-secret
+              key: API_KEY
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: data-provider-secret
+              key: SECRET_KEY
+        - name: CA_CERT_PATH
+          valueFrom:
+            secretKeyRef:
+              name: data-provider-secret
+              key: CA_CERT_PATH
+              optional: true  # CA 憑證路徑為可選
+        - name: CA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: data-provider-secret
+              key: CA_PASSWORD
+              optional: true  # CA 憑證密碼為可選
+        # 健康檢查配置
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60  # Python 應用啟動較慢
+          periodSeconds: 30
+          timeoutSeconds: 120
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 120
+          failureThreshold: 3
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "200m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 15"]  # 給予更多時間處理請求
+        # 安全配置
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false  # Python 應用可能需要寫入暫存檔
+        # 工作目錄配置
+        workingDir: /app
+      # 沒有 init container 因為 data-provider 是基礎服務
+      restartPolicy: Always
+      dnsPolicy: ClusterFirst

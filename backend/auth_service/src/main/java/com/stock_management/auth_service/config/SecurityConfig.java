@@ -24,6 +24,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // 允許所有人（不需登入）存取註冊與登入 API
                 .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
+                // 允許健康檢查端點（K8s liveness/readiness probes）
+                .requestMatchers("/actuator/health/**").permitAll()
                 // 其他所有 API 都需要認證（登入）
                 .anyRequest().authenticated()
             )

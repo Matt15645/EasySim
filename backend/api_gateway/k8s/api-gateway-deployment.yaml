@@ -22,24 +22,40 @@ spec:
         app: api-gateway
         tier: gateway
     spec:
+      serviceAccountName: api-gateway-sa
+      initContainers:
+      - name: wait-for-services
+        image: busybox:1.35
+        command: ['sh', '-c']
+        args:
+        - |
+          for svc in auth-service:8081 account-service:8082 subscribe-service:8083 backtest-service:8084; do
+            echo "Waiting for $svc..."
+            until nc -z ${svc%:*} ${svc#*:}; do
+              echo "Still waiting for $svc..."
+              sleep 2
+            done
+            echo "$svc is ready"
+          done
+          echo "All services are ready"
       containers:
       - name: api-gateway
-        image: localhost:5001/api-gateway:latest  # k3d registry
-        imagePullPolicy: Always
+        image: api-gateway:latest
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
           name: http
-        env:
-        - name: SERVER_PORT
-          value: "8080"
-        - name: SPRING_PROFILES_ACTIVE
-          value: "k8s"
-        # Gateway 路由配置通過 application.yml 處理
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: api-gateway-config
+        - secretRef:
+            name: api-gateway-secret
         livenessProbe:
           httpGet:
             path: /actuator/health/liveness
             port: 8080
-          initialDelaySeconds: 60
+          initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
           failureThreshold: 3
@@ -47,16 +63,28 @@ spec:
           httpGet:
             path: /actuator/health/readiness
             port: 8080
-          initialDelaySeconds: 30
+          initialDelaySeconds: 15
           periodSeconds: 5
           timeoutSeconds: 3
-          successThreshold: 1
           failureThreshold: 3
         resources:
-          limits:
-            cpu: "1"
-            memory: "1Gi"
           requests:
-            cpu: "500m"
             memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        volumeMounts:
+        - name: config-volume
+          mountPath: /config
+          readOnly: true
+      volumes:
+      - name: config-volume
+        configMap:
+          name: api-gateway-config
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
       restartPolicy: Always
+      dnsPolicy: ClusterFirst
