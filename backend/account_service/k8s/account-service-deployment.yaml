@@ -20,8 +20,8 @@ spec:
       serviceAccountName: account-service-sa  # 使用自訂 ServiceAccount
       containers:
       - name: account-service
-        image: account-service:latest  # 本地構建的映像
-        imagePullPolicy: IfNotPresent  # minikube 使用本地映像，k3s 改為 Always
+        image: matt15456/account-service:latest  # Docker Hub映像
+        imagePullPolicy: Always  # 強制拉取最新映像
         ports:
         - containerPort: 8082
           name: http

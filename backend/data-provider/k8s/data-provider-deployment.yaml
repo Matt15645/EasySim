@@ -20,8 +20,8 @@ spec:
       serviceAccountName: data-provider-sa  # 使用自訂 ServiceAccount
       containers:
       - name: data-provider
-        image: data-provider:latest  # 本地構建的映像
-        imagePullPolicy: IfNotPresent  # minikube 使用本地映像，k3s 改為 Always
+        image: matt15456/data-provider:latest  # Docker Hub映像
+        imagePullPolicy: Always  # 總是拉取最新映像
         ports:
         - containerPort: 8000
           name: http
@@ -53,6 +53,16 @@ spec:
             configMapKeyRef:
               name: data-provider-config
               key: LOG_LEVEL
+        - name: SJ_LOG_PATH
+          valueFrom:
+            configMapKeyRef:
+              name: data-provider-config
+              key: SJ_LOG_PATH
+        - name: SJ_CONTRACTS_PATH
+          valueFrom:
+            configMapKeyRef:
+              name: data-provider-config
+              key: SJ_CONTRACTS_PATH
         # 從 Secret 引用敏感配置
         - name: API_KEY
           valueFrom:
@@ -107,7 +117,8 @@ spec:
         # 安全配置
         securityContext:
           runAsNonRoot: true
-          runAsUser: 1000
+          runAsUser: 999   # 對應Dockerfile中的appuser UID
+          runAsGroup: 999  # 對應Dockerfile中的appuser GID
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: false  # Python 應用可能需要寫入暫存檔
         # 工作目錄配置

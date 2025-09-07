@@ -10,7 +10,7 @@ spring:
       globalcors:
         corsConfigurations:
           '[/**]':
-            allowedOrigins: "*"
+            allowedOrigins: "http://frontend.stock-management.local:8080"
             allowedMethods:
               - GET
               - POST
@@ -18,6 +18,7 @@ spring:
               - DELETE
               - OPTIONS
             allowedHeaders: "*"
+            allowCredentials: true
       routes:
         - id: auth-service
           uri: http://auth-service:8081

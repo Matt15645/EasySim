@@ -7,30 +7,22 @@ metadata:
     app: api-gateway
     tier: gateway
   annotations:
-    # === Ingress 層級：只處理域名和 TLS termination ===
-    # CORS, 驗證, Rate limiting 等業務邏輯由 API Gateway 處理
-    ingressClassName: nginx  # 使用現代語法
-    
-    # 本地開發設定
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"  # 雲端：改為 "true"
-    
-    # 連接設定
+    # 使用 nginx ingress controller
+    ingressClassName: nginx
+
+    # 關閉 HTTPS 自動 redirect（本地開發用）
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+
+    # Proxy timeout 設定
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-    
-    # 移除 CORS 設定 - 這些應該由 API Gateway 處理
-    # nginx.ingress.kubernetes.io/enable-cors: "true"  # 移到 API Gateway
-    # nginx.ingress.kubernetes.io/cors-allow-origin: "*"  # 移到 API Gateway
 spec:
-  ingressClassName: nginx  # 雲端部署時根據供應商調整
   rules:
-  - host: api.stock-management.local  # 雲端部署：改為 api.your-domain.com
+  - host: api.stock-management.local   # 本地測試
     http:
       paths:
-      # 所有 API 流量都轉發到 API Gateway
-      # API Gateway 負責：路由、驗證、CORS、Rate limiting、微服務調用
       - path: /
         pathType: Prefix
         backend:
@@ -38,27 +30,9 @@ spec:
             name: api-gateway
             port:
               number: 8080
+  # 如果未來要開啟 TLS，可以取消註解
   # tls:
   # - hosts:
   #   - api.stock-management.local
   #   secretName: api-gateway-tls
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: api-gateway-external
-  namespace: stock-management
-  labels:
-    app: api-gateway
-    tier: gateway
-    purpose: external-access
-spec:
-  type: LoadBalancer
-  selector:
-    app: api-gateway
-  ports:
-  - name: http
-    port: 80
-    targetPort: 8080
-    protocol: TCP
-  sessionAffinity: None
+

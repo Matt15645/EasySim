@@ -40,8 +40,8 @@ spec:
           echo "All services are ready"
       containers:
       - name: api-gateway
-        image: api-gateway:latest
-        imagePullPolicy: IfNotPresent
+        image: matt15456/api-gateway:latest  # Docker Hub映像
+        imagePullPolicy: Always  # 總是拉取最新映像
         ports:
         - containerPort: 8080
           name: http

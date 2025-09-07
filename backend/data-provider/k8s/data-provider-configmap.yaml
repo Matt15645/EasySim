@@ -18,6 +18,8 @@ data:
   
   # 日誌配置
   LOG_LEVEL: "INFO"  # 生產環境使用 INFO，調試時用 DEBUG
+  SJ_LOG_PATH: "/tmp/shioaji.log"  # Shioaji 日誌檔案路徑
+  SJ_CONTRACTS_PATH: "/tmp"  # Shioaji 合約檔案存放路徑
   
   # FastAPI 配置
   FASTAPI_ENV: "production"

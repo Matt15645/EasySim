@@ -16,6 +16,9 @@ data:
   SUBSCRIBE_SERVICE_URI: "http://subscribe-service:8083"
   BACKTEST_SERVICE_URI: "http://backtest-service:8084"
 
+  # 原本的特定 origin 設定（暫時註解用於測試）
+  # CORS_ALLOWED_ORIGINS: "http://frontend.stock-management.local:8080"
+  # 測試用設定：允許所有 origin
   CORS_ALLOWED_ORIGINS: "*"
   CORS_ALLOWED_METHODS: "GET,POST,PUT,DELETE,OPTIONS"
   CORS_ALLOWED_HEADERS: "*"
@@ -37,6 +40,10 @@ data:
           globalcors:
             corsConfigurations:
               '[/**]':
+                # 原本的特定 origin 設定（暫時註解用於測試）
+                # allowedOrigins: "http://frontend.stock-management.local:8080"
+                # allowCredentials: true
+                # 測試用設定：允許所有 origin，但不包含 credentials
                 allowedOrigins: "*"
                 allowedMethods:
                   - GET
@@ -45,6 +52,7 @@ data:
                   - DELETE
                   - OPTIONS
                 allowedHeaders: "*"
+                allowCredentials: false
           routes:
             - id: auth-service
               uri: http://auth-service:8081
@@ -79,3 +87,4 @@ data:
       level:
         org.springframework.cloud.gateway: DEBUG
         reactor.netty.http.client: DEBUG
+        com.stock_management.api_gateway.filter.JwtAuthenticationFilter: INFO
