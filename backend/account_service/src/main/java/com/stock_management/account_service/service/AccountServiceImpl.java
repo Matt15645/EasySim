@@ -1,13 +1,10 @@
 package com.stock_management.account_service.service;
 
 import com.stock_management.account_service.dto.*;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
@@ -25,23 +22,9 @@ public class AccountServiceImpl implements AccountService {
     @Value("${data-provider.url}")
     private String dataProviderUrl;
 
-    private Long getCurrentUserId() {
-        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attrs != null) {
-            HttpServletRequest request = attrs.getRequest();
-            String userId = request.getHeader("X-User-Id");
-            if (userId != null && !userId.isEmpty()) {
-                return Long.valueOf(userId);
-            }
-        }
-        log.warn("X-User-Id header not found. This should not happen in production.");
-        throw new RuntimeException("User ID not found in request header.");
-    }
-
     @Override
     public PieChartResponseDto getPortfolioPieChart() {
-        Long userId = getCurrentUserId();
-        log.info("Fetching pie chart for user ID: {}", userId);
+        log.info("Fetching pie chart data for local account service");
 
         PortfolioResponseDto portfolio = getPortfolio();
         
@@ -109,8 +92,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public PortfolioSummaryDto getPortfolioSummary() {
-        Long userId = getCurrentUserId();
-        log.info("Fetching summary for user ID: {}", userId);
+        log.info("Fetching portfolio summary for local account service");
 
         PortfolioResponseDto portfolio = getPortfolio();
         

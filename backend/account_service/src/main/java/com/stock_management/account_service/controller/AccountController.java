@@ -11,6 +11,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Account Controller - 本地端專屬帳戶管理
+ * 
+ * 提供投資組合相關的 API 端點：
+ * - 持股列表
+ * - 投資組合摘要
+ * - 持股圓餅圖數據
+ * 
+ * 注意：此服務設計為本地端使用，使用模擬數據展示功能
+ */
 @RestController
 @RequestMapping("/api/account")
 @RequiredArgsConstructor
