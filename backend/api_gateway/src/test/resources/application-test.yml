@@ -1,0 +1,16 @@
+jwt:
+  secret: test-secret-key-for-unit-testing-at-least-32-characters-long
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: test-auth-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/auth/**
+            
+        - id: test-account-service  
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/account/**
