@@ -1,0 +1,19 @@
+# Data Provider Service Test Requirements
+# 測試框架
+pytest==7.4.0
+pytest-asyncio==0.21.1
+
+# FastAPI 測試
+httpx==0.24.1  # TestClient 需要
+
+# Mock 相關 (Python 內建，但列出來參考)
+# unittest.mock - 內建模組
+
+# 已有的生產依賴
+fastapi==0.111.0 
+uvicorn==0.30.1
+gunicorn==21.2.0
+python-dotenv==1.0.1
+shioaji==1.2.6
+pydantic==2.8.2
+tenacity==8.2.3
