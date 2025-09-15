@@ -78,6 +78,38 @@ build/
 .pytest_cache/
 junit-report.xml
 
+# ========== Kubernetes 敏感配置 ==========
+**/k8s/**/*secret*.yaml     # Kubernetes Secrets (包含密碼、API key等)
+**/k8s/**/*configmap*.yaml  # Kubernetes ConfigMaps (可能包含配置敏感信息)
+
+# ========== 證書與密鑰檔案 ==========
+*.key                       # 私鑰檔案
+*.pem                       # 證書檔案
+*.crt                       # 證書檔案
+*.p12                       # PKCS#12 證書檔案
+*.jks                       # Java KeyStore
+*.keystore                  # KeyStore 檔案
+certificate/                # 證書目錄
+certs/                      # 證書目錄
+
+# ========== API 金鑰與認證 ==========
+**/credentials.json         # API 憑證
+**/service-account.json     # 服務帳戶檔案
+auth.json                   # 認證配置
+token.txt                   # 權杖檔案
+.aws/                       # AWS 憑證
+
+# ========== 敏感配置檔案 ==========
+config.local.*              # 本地配置檔案
+application-local.properties # Spring 本地配置
+application-dev.properties   # 開發環境配置（可能包含真實DB連線）
+application-prod.properties  # 生產環境配置
+
+# ========== 備份與快照 ==========
+*.backup                    # 資料庫備份
+*.dump                      # 傾印檔案
+*.snapshot                  # 快照檔案
+
 # 其他
 Thumbs.db
 ehthumbs.db
