@@ -1,53 +1,13 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: postgres-config
-  namespace: stock-management
-  labels:
-    app: postgres
-data:
-  POSTGRES_DB: stockmanagement
-  POSTGRES_USER: stockuser
-  POSTGRES_PASSWORD: stockpass123  # 生產環境應使用 Secret
-
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: postgres-secret
-  namespace: stock-management
-  labels:
-    app: postgres
-type: Opaque
-data:
-  # echo -n "stockpass123" | base64
-  POSTGRES_PASSWORD: c3RvY2twYXNzMTIz
-
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: postgres-pvc
-  namespace: stock-management
-  labels:
-    app: postgres
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 5Gi
-  storageClassName: standard  # minikube 默認 storage class
-
----
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: postgres
   namespace: stock-management
   labels:
     app: postgres
+    version: v1
 spec:
+  serviceName: postgres-headless  # 必須指定 headless service
   replicas: 1
   selector:
     matchLabels:
@@ -56,6 +16,7 @@ spec:
     metadata:
       labels:
         app: postgres
+        version: v1
     spec:
       containers:
       - name: postgres
@@ -66,6 +27,7 @@ spec:
           name: postgres
           protocol: TCP
         env:
+        # 從 ConfigMap 引用非敏感配置
         - name: POSTGRES_DB
           valueFrom:
             configMapKeyRef:
@@ -76,13 +38,22 @@ spec:
             configMapKeyRef:
               name: postgres-config
               key: POSTGRES_USER
+        - name: PGDATA
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-config
+              key: PGDATA
+        - name: POSTGRES_INITDB_ARGS
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-config
+              key: POSTGRES_INITDB_ARGS
+        # 從 Secret 引用敏感配置
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
               name: postgres-secret
               key: POSTGRES_PASSWORD
-        - name: PGDATA
-          value: /var/lib/postgresql/data/pgdata
         volumeMounts:
         - name: postgres-data
           mountPath: /var/lib/postgresql/data
@@ -113,26 +84,16 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "500m"
-      volumes:
-      - name: postgres-data
-        persistentVolumeClaim:
-          claimName: postgres-pvc
-      restartPolicy: Always
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: postgres-service
-  namespace: stock-management
-  labels:
-    app: postgres
-spec:
-  type: ClusterIP
-  ports:
-  - port: 5432
-    targetPort: 5432
-    protocol: TCP
-    name: postgres
-  selector:
-    app: postgres
+  # StatefulSet 特有的 volumeClaimTemplates
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-data
+      labels:
+        app: postgres
+    spec:
+      accessModes: 
+        - ReadWriteOnce
+      storageClassName: standard  # minikube 默認 storage class
+      resources:
+        requests:
+          storage: 5Gi
