@@ -39,6 +39,6 @@ EXPOSE 8000
 # 定義容器啟動時執行的命令
 # 使用 gunicorn (搭配 uvicorn.workers.UvicornWorker) 是生產環境運行 ASGI 應用程式的常見方式
 # --bind 0.0.0.0:8000 綁定所有網路介面
-# --workers 4  (設定 worker 數量，通常是 2 * CPU 核心數 + 1，或根據負載調整)
+# --workers 1  (對於有狀態的 API 連線，使用單一 worker)
 # main:app 表示運行 main.py 檔案中的 app 實例
-CMD ["gunicorn", "main:app", "--workers", "4", "--bind", "0.0.0.0:8000", "-k", "uvicorn.workers.UvicornWorker"]
+CMD ["gunicorn", "main:app", "--workers", "1", "--bind", "0.0.0.0:8000", "-k", "uvicorn.workers.UvicornWorker"]

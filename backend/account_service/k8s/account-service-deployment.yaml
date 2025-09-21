@@ -7,7 +7,7 @@ metadata:
     app: account-service
     version: v1
 spec:
-  replicas: 1  # minikube 測試用，生產環境可調整為 2-3
+  replicas: 2  # 控制有幾個pod在運行
   selector:
     matchLabels:
       app: account-service
@@ -48,7 +48,7 @@ spec:
             configMapKeyRef:
               name: account-service-config
               key: LOGGING_LEVEL
-        - name: JAVA_TOOL_OPTIONS   # 改用 JAVA_TOOL_OPTIONS，K8s 常見做法
+        - name: JAVA_TOOL_OPTIONS   
           valueFrom:
             configMapKeyRef:
               name: account-service-config

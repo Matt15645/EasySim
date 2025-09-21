@@ -15,5 +15,5 @@ spec:
     port: 8084        # 集群內其他服務訪問的端口
     targetPort: 8084  # Pod 內容器的端口
     protocol: TCP
-  sessionAffinity: None  # 或 ClientIP，根據需求調整
+  sessionAffinity: None  
   publishNotReadyAddresses: false  # 只有就緒的 Pod 才會接收流量

@@ -11,7 +11,7 @@ data:
   PYTHONUNBUFFERED: "1"  # 確保 Python 輸出不被緩衝
   
   # Gunicorn 配置
-  GUNICORN_WORKERS: "2"  # minikube 使用較少 worker，生產環境可調整為 4
+  GUNICORN_WORKERS: "1"  # 對於有狀態的 API 連線使用單一 worker
   GUNICORN_BIND: "0.0.0.0:8000"
   GUNICORN_TIMEOUT: "120"  # 股票資料請求可能較耗時
   GUNICORN_KEEPALIVE: "2"

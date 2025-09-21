@@ -89,6 +89,7 @@ databases/**/k8s/*configmap*.yaml # 資料庫 ConfigMaps (可能包含敏感信�
 *.p12                       # PKCS#12 證書檔案
 *.jks                       # Java KeyStore
 *.keystore                  # KeyStore 檔案
+*.pfx                       # Personal Information Exchange 證書
 certificate/                # 證書目錄
 certs/                      # 證書目錄
 

@@ -42,7 +42,7 @@ public class AuthServiceImpl implements AuthService {
         // 保存用戶到資料庫
         User savedUser = userRepository.save(user);
         
-        // 創建簡單的模擬令牌 (在實際生產環境中應使用 JWT)
+        // 創建 JWT
         String token = jwtUtil.generateToken(savedUser.getId());
         
         // 返回認證響應
@@ -64,7 +64,7 @@ public class AuthServiceImpl implements AuthService {
             throw new AppException("Invalid email or password", HttpStatus.UNAUTHORIZED);
         }
         
-        // 創建簡單的模擬令牌 (在實際生產環境中應使用 JWT)
+        // 創建 JWT
         String token = jwtUtil.generateToken(user.getId());
         
         // 返回認證響應

@@ -30,9 +30,3 @@ spec:
             name: api-gateway
             port:
               number: 8080
-  # 如果未來要開啟 TLS，可以取消註解
-  # tls:
-  # - hosts:
-  #   - api.stock-management.local
-  #   secretName: api-gateway-tls
-

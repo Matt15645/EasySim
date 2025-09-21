@@ -6,16 +6,22 @@ import os
 from dotenv import load_dotenv
 from typing import List, Optional, Dict
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import defaultdict
+import logging
 
 # 在應用程式啟動時載入 .env 檔案中的環境變數
 load_dotenv()
+
+# 設定日誌
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 API_KEY = os.getenv("API_KEY")
 SECRET_KEY = os.getenv("SECRET_KEY")
 CA_CERT_PATH=os.getenv("CA_CERT_PATH")
 CA_PASSWORD=os.getenv("CA_PASSWORD")
+
 if not API_KEY or not SECRET_KEY:
     print("❌ 錯誤: 未找到 API Key 或 Secret Key，請確認已正確設定環境變數或 .env 檔案。")
     exit(1)
@@ -27,16 +33,55 @@ app = FastAPI(
 )
 
 api = sj.Shioaji(simulation = False)   # Chose Mode
+last_login_time = None
 
-accounts = api.login(
-    api_key = API_KEY,         
-    secret_key = SECRET_KEY   
-)
+def ensure_api_connection():
+    """確保 API 連線有效，如果無效則重新登入"""
+    global last_login_time
+    
+    try:
+        # 簡單測試連線是否有效
+        api.list_positions(unit=sj.constant.Unit.Share)
+        return True
+    except:
+        # 連線無效，嘗試重新登入
+        logger.info("API 連線已失效，嘗試重新登入...")
+        try:
+            accounts = api.login(
+                api_key = API_KEY,         
+                secret_key = SECRET_KEY   
+            )
+            
+            if CA_CERT_PATH and CA_PASSWORD:
+                api.activate_ca(ca_path=CA_CERT_PATH, ca_passwd=CA_PASSWORD)
+            
+            last_login_time = datetime.now()
+            logger.info(f"✅ 重新登入成功，時間: {last_login_time}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ 重新登入失敗: {str(e)}")
+            return False
 
-if CA_CERT_PATH and CA_PASSWORD:
-    api.activate_ca(ca_path=CA_CERT_PATH, ca_passwd=CA_PASSWORD)
-else:
-    print("⚠️ CA 憑證路徑或密碼未設定，略過憑證啟用。")
+# 初始登入
+try:
+    accounts = api.login(
+        api_key = API_KEY,         
+        secret_key = SECRET_KEY   
+    )
+    
+    if CA_CERT_PATH and CA_PASSWORD:
+        api.activate_ca(ca_path=CA_CERT_PATH, ca_passwd=CA_PASSWORD)
+        logger.info("已啟用 CA 憑證")
+    else:
+        logger.warning("⚠️ CA 憑證路徑或密碼未設定，略過憑證啟用。")
+    
+    last_login_time = datetime.now()
+    logger.info(f"✅ 初始登入成功，時間: {last_login_time}")
+    
+except Exception as e:
+    logger.error(f"❌ 初始登入失敗: {str(e)}")
+    exit(1)
 
 # 新增 Pydantic 模型
 class Position(BaseModel):
@@ -74,6 +119,10 @@ class ScannerRequest(BaseModel):
 @app.get("/api/positions", response_model=PositionResponse)
 async def get_positions():
     try:
+        # 確保 API 連線有效
+        if not ensure_api_connection():
+            raise HTTPException(status_code=503, detail="API 連線失敗")
+            
         # 取得所有帳戶的持股資訊
         positions_data = api.list_positions(unit=sj.constant.Unit.Share)
         
@@ -181,6 +230,10 @@ async def get_kbars_async(symbol: str, start: str, end: str) -> Dict:
 @app.post("/api/historical")
 async def get_historical_data(req: HistoricalRequest):
     try:
+        # 確保 API 連線有效
+        if not ensure_api_connection():
+            raise HTTPException(status_code=503, detail="API 連線失敗")
+            
         # 並行處理所有股票
         tasks = [get_kbars_async(symbol, req.start_date, req.end_date) for symbol in req.symbols]
         results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -212,6 +265,10 @@ def get_scanner_type(type_str: str):
 @app.post("/api/scanner")  
 def get_scanner_data(request: ScannerRequest):  
     try:
+        # 確保 API 連線有效
+        if not ensure_api_connection():
+            raise HTTPException(status_code=503, detail="API 連線失敗")
+            
         scanner_type = get_scanner_type(request.scanner_type)
         if not scanner_type:
             raise HTTPException(status_code=400, detail="不支援的掃描器類型")
@@ -230,4 +287,8 @@ def get_scanner_data(request: ScannerRequest):
 # 新增健康檢查端點
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "service": "data-provider"}
+    return {
+        "status": "healthy", 
+        "service": "data-provider",
+        "last_login_time": last_login_time.isoformat() if last_login_time else None
+    }
