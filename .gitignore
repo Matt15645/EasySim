@@ -85,6 +85,8 @@ databases/**/k8s/*configmap*.yaml # 資料庫 ConfigMaps (可能包含敏感信�
 # ========== 微服務敏感配置 ==========
 backend/**/k8s/*secret*.yaml      # 微服務 Secrets
 backend/**/k8s/*configmap*.yaml   # 微服務 ConfigMaps (可能包含敏感信息)
+frontend/**/k8s/*secret*.yaml     # Frontend Secrets
+frontend/**/k8s/*configmap*.yaml  # Frontend ConfigMaps (可能包含敏感信息)
 k8s/*secret*.yaml                 # 根目錄 k8s Secrets
 k8s/*configmap*.yaml              # 根目錄 k8s ConfigMaps
 
