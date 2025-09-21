@@ -120,7 +120,7 @@ services:
       - auth-service
       - account-service
       - backtest-service
-      # - subscribe_service # 如有
+      - subscribe-service
 
   subscribe-service:
     build:
