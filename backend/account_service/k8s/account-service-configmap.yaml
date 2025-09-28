@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: account-service-config
+  namespace: stock-management
+  labels:
+    app: account-service
+data:
+  # Spring Boot 配置
+  SPRING_PROFILES_ACTIVE: "k8s"  # k8s 專用配置檔
+  
+  # 服務間通信配置
+  DATA_PROVIDER_URL: "http://data-provider-service:8000"  # 集群內服務名稱
+  DATA_PROVIDER_TIMEOUT: "5000"  # 連接超時時間 (毫秒)
+  
+  # 日誌配置
+  LOGGING_LEVEL: "INFO"  # 生產環境使用 INFO，調試時用 DEBUG
+  LOGGING_PATTERN: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  
+  # JVM 配置
+  JAVA_OPTS: "-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+  
+  # 應用配置
+  SERVER_PORT: "8082"
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: "when_authorized"
+  
+  # 微服務配置
+  SPRING_APPLICATION_NAME: "account-service"
+  
+  # 容錯配置
+  RESILIENCE4J_CIRCUITBREAKER_ENABLED: "true"
+  RESILIENCE4J_RETRY_ENABLED: "true"

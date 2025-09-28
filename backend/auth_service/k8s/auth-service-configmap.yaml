@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: auth-service-config
+  namespace: stock-management
+  labels:
+    app: auth-service
+data:
+  # Spring Boot 配置
+  SPRING_PROFILES_ACTIVE: "k8s"  # k8s 專用配置檔
+  
+  # 資料庫配置
+  DB_URL: "jdbc:postgresql://postgres-service:5432/stockmanagement"  # 集群內服務名稱
+  JPA_DDL_AUTO: "update"  # 啟動時自動更新資料庫結構
+  JPA_SHOW_SQL: "false"   # 生產環境建議關閉，調試時開啟
+  HIBERNATE_FORMAT_SQL: "false"  # 生產環境建議關閉
+  
+  # 應用配置
+  SERVER_PORT: "8081"
+  
+  # 日誌配置
+  LOGGING_LEVEL_ROOT: "INFO"  # 生產環境使用 INFO，調試時用 DEBUG
+  LOGGING_PATTERN: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  
+  # JVM 配置
+  JAVA_OPTS: "-Xms256m -Xmx512m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+  
+  # Actuator 配置
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
+  MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: "when_authorized"
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+  MANAGEMENT_ENDPOINT_HEALTH_GROUP_READINESS_INCLUDE: "db"
+  MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED: "true"
+  
+  # 微服務配置
+  SPRING_APPLICATION_NAME: "auth-service"
